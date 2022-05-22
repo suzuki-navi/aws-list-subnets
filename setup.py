@@ -5,7 +5,7 @@ with open('requirements.txt') as requirements_file:
 
 setup(
     name        = 'aws-list-subnets',
-    version     = '0.1.1',
+    version     = '0.1.2',
     description = "list aws subnets",
     author      = "suzuki-navi",
     packages    = find_packages(),

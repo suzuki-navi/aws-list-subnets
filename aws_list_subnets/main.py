@@ -1,11 +1,12 @@
 import datetime
 import json
+import re
 import sys
 
 import boto3
 
 def main():
-    profile, region, verbose, help_flag = parse_args()
+    profile, region, verbose, color_flag, help_flag = parse_args()
     if help_flag:
         print_help()
         return
@@ -22,9 +23,13 @@ def main():
         nics = []
     segments = build_segments(vpcs, subnets, nics)
 
+    if color_flag == 0 and sys.stdout.isatty():
+        color_flag = 1
     for vpc_segment in segments:
         lines = build_table(vpc_segment, verbose)
         for line in lines:
+            if color_flag > 0:
+                line = to_colorful(line)
             print(line)
         print()
 
@@ -36,8 +41,9 @@ OPTION:
     --help
     --profile <AWS_PROFILE_NAME>
     --region <AWS_REGION_NAME>
-    --simple
     -v
+    --simple
+    --color
 """.strip()
     print(help_str)
 
@@ -46,6 +52,7 @@ def parse_args():
     profile = None
     region = None
     verbose = 1
+    color_flag = 0
     argCount = len(sys.argv)
     i = 1
     while i < argCount:
@@ -65,11 +72,13 @@ def parse_args():
             verbose = 0
         elif a == "--help":
             help_flag = True
+        elif a == "--color":
+            color_flag = 1
         elif a == "-v":
             verbose = 2
         else:
             raise Exception(f"Unknown parameter: {a}")
-    return (profile, region, verbose, help_flag)
+    return (profile, region, verbose, color_flag, help_flag)
 
 class Segment:
     def __init__(self, address, len_prefix, info):
@@ -289,7 +298,7 @@ def build_segment_table(segment, verbose, rest_depth):
         sub_prefix3 = "+---"
         if segment.nics:
             for line in build_nics_list(segment, verbose):
-                lines.append("| " + line)
+                lines.append("|   " + line)
     else:
         sub_prefix1 = "+---"
         sub_prefix2 = "|   "
@@ -364,6 +373,17 @@ def to_json_safe(obj):
     else:
         obj2 = obj
     return obj2
+
+def to_colorful(line):
+    ip_start = '\x1b[32m'
+    line_start = '\x1b[90m'
+    reset = '\x1b[0m'
+    line = re.sub(r'([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}(/[0-9]{0,2})?)', ip_start + r'\1' + reset, line)
+    if line.find('--') >= 0:
+        line = line_start + line + reset
+    else:
+        line = re.sub(r'\A(|[ |]+)', line_start + r'\1' + reset, line)
+    return line
 
 if __name__ == "__main__":
     main()

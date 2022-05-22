@@ -5,7 +5,13 @@ import sys
 import boto3
 
 def main():
-    session, verbose = args_to_session()
+    profile, region, verbose, help_flag = parse_args()
+    if help_flag:
+        print_help()
+        return
+
+    session = boto3.session.Session(profile_name = profile, region_name = region)
+
     ec2_client = session.client("ec2")
 
     vpcs = fetch_vpc_list(ec2_client)
@@ -22,7 +28,21 @@ def main():
             print(line)
         print()
 
-def args_to_session():
+def print_help():
+    help_str = """
+aws-list-subnets [OPTIONS]
+
+OPTION:
+    --help
+    --profile <AWS_PROFILE_NAME>
+    --region <AWS_REGION_NAME>
+    --simple
+    -v
+""".strip()
+    print(help_str)
+
+def parse_args():
+    help_flag = False
     profile = None
     region = None
     verbose = 1
@@ -43,12 +63,13 @@ def args_to_session():
             i = i + 1
         elif a == "--simple":
             verbose = 0
+        elif a == "--help":
+            help_flag = True
         elif a == "-v":
             verbose = 2
         else:
             raise Exception(f"Unknown parameter: {a}")
-    session = boto3.session.Session(profile_name = profile, region_name = region)
-    return (session, verbose)
+    return (profile, region, verbose, help_flag)
 
 class Segment:
     def __init__(self, address, len_prefix, info):

@@ -4,9 +4,9 @@ command line tool to list AWS subnets.
 
 ## Usage
 
-    $ aws_list_subnets
-    $ aws_list_subnets --profile AWS_PROFILE_NAME
-    $ aws_list_subnets --help
+    $ aws-list-subnets
+    $ aws-list-subnets --profile <AWS_PROFILE_NAME>
+    $ aws-list-subnets --help
 
 ## Installation
 
